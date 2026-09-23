@@ -1,8 +1,14 @@
 #envio as imagens para a fila de imagens
 # devo criar a fila de imagens
 #le as imagens do DOCKER de uma pasta e publica na fila
+import base64
+import json
 import pika
 import sys
+import os
+from pathlib import Path
+
+
 
 #sending
 #comeco uma comunicacao com o RABBITMQ server
@@ -14,12 +20,21 @@ channel = connection.channel()
 channel.queue_declare(queue='produtores',durable=True,arguments={'x-queue-type':'quorum'})
 #procurar saber essas especificacoes internas
 
-#nunca devo enviar a mensagem diretamente para a lista deve ter uma exchange
-#a mensagem agora é arbitraria, pode vir da linha de comando
-message = ''.join(sys.argv[1:]) or 'Hello World'
-channel.basic_publish(exchange='',routing_key='produtores', body= message,
+
+#abre o diretorio das imagens no primeiro client
+#para ler todas as imagens
+for imagens in Path("imagensClientes/cliente1").glob("*.png"):
+    dados_imagens = imagens.read_bytes()
+    nome_imagens = imagens.name
+    #Transformo o dados imagens em uma string de texto
+    imagens_str = base64.b64encode(dados_imagens).decode("utf-8")
+    #Vou montar um dicionario sobre ela, assim eu consigo juntar com o nome_imagens
+    dicionario = {"filename" : nome_imagens, "content" : imagens_str}
+    #Transformando para JSON
+    json_final = json.dumps(dicionario)
+    channel.basic_publish(exchange='',routing_key='produtores', body= json_final,
                       properties=pika.BasicProperties(delivery_mode= pika.DeliveryMode.Persistent)) #deixo a mensagem persistente, tells RABBITMQ to save this message to disk
-print(f" [x] Sent {message}")
+
 
 #aqui eu confirmo que a mensagem chegou ao RABBITMQ
 connection.close()
