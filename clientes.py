@@ -11,7 +11,7 @@ channel = connection.channel()
 #se quero conectar a um brocker de outra maquina devo colocar o IP dela
 
 #criar a lista antes de enviar a mensagem
-channel.queue_declare(queue='produtores',durable=True,arguments={'x-queue-reply-to':'quorum'})
+channel.queue_declare(queue='produtores',durable=True,arguments={'x-queue-type':'quorum'})
 #procurar saber essas especificacoes internas
 
 #nunca devo enviar a mensagem diretamente para a lista deve ter uma exchange

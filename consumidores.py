@@ -12,7 +12,7 @@ def main():
     channel = connection.channel()
 
 #que nem antes, ter certeza que a fila existe
-    channel.queue_declare(queue='produtores', durable=True, arguments={'x-queue-reply-to': 'quorum'})  #a imagem é o ultimo
+    channel.queue_declare(queue='produtores', durable=True, arguments={'x-queue-type': 'quorum'})  #a imagem é o ultimo
     print(' [*] Waiting for messages. To exit press CTRL+C')
 #PARA VER AS LISTAS RABBITMQ E QUANTAS MENSAGEM TEM NELAS, posso fazer com uma ferramenta de privilegio
 # sudo rabbitmqctl list_queues
