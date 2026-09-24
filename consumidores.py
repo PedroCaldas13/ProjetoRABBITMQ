@@ -1,9 +1,16 @@
 #aqui o receive vai ser aplicado, vai receber as mensagens e printa-la na tela
+import base64
+import io
 import os
 from uuid import main
 import sys
+
+
 import pika
 import time
+import json
+from PIL import Image
+
 
 def main():
 
@@ -20,8 +27,20 @@ def main():
 #funcao de callback para receber as mensagens, no caso via printar os conteudos da mensagem
 #fake a second worker for every dot in the message body, it will pop the messages from the queue and perform the task
     def callback(ch, method, properties, body):
-        print(f" [x] Received {body.decode()}") #saber oq a funcao decode faz
-        time.sleep(body.count(b'.'))
+        #tenho que pegar o json
+        mensagem  = json.loads(body)
+        #pegar o dicionario da mensagem passando as chaves
+        imagens_dados = mensagem['content']
+        imagens_nomes = mensagem['filename']
+        #convertendo para byte
+        imagem_bytes = base64.b64decode(imagens_dados)
+        #ler a imagem em bytes com o pillow
+        im = Image.open(io.BytesIO(imagem_bytes))
+        #agora converto para a escala de cinza
+        im_cinza = im.convert('L')
+
+        print(f" [x] Received {im_cinza.decode()}") #saber oq a funcao decode faz
+        time.sleep(im_cinza.count(b'.'))
         print("[x] Done")
         ch.basic_ack(delivery_tag = method.delivery_tag) #o ack manual, nao perco a mensagem mesmo se eu der um CONTROL C enquanto ela estiver sendo enviada, quando o worker terminar a mensagem sera reenviada
     #o ack deve ser enviado no mesmo canal que se recebe a mensagem
