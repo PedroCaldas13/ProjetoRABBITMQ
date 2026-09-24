@@ -2,12 +2,9 @@
 import base64
 import io
 import os
-from uuid import main
+
 import sys
-
-
 import pika
-import time
 import json
 from PIL import Image
 
@@ -26,6 +23,10 @@ def main():
 
 #funcao de callback para receber as mensagens, no caso via printar os conteudos da mensagem
 #fake a second worker for every dot in the message body, it will pop the messages from the queue and perform the task
+
+# criando exchange,deve ser fora
+    channel.exchange_declare(exchange='logs', exchange_type='fanout')
+
     def callback(ch, method, properties, body):
         #tenho que pegar o json
         mensagem  = json.loads(body)
@@ -37,20 +38,34 @@ def main():
         #ler a imagem em bytes com o pillow
         im = Image.open(io.BytesIO(imagem_bytes))
         #agora converto para a escala de cinza
-        im_cinza = im.convert('L')
+        im_cinza = im.convert('L') #nao ta mais em bytes
 
-        print(f" [x] Received {im_cinza.decode()}") #saber oq a funcao decode faz
-        time.sleep(im_cinza.count(b'.'))
+        print(f" [x] Received {imagens_nomes}") #saber oq a funcao decode faz
         print("[x] Done")
+
+        #preciso converter de volta para bytes para enviar com o publish(etapa 3)
+        buffer = io.BytesIO()
+        im_cinza.save(buffer, format="PNG") #salvo no buffer
+        dados = buffer.getvalue() #pego os dados
+        dados_finais = base64.b64encode(dados)
+        dic = {"filename": imagens_nomes,"content": dados_finais}
+        #agora faco o publish no exchange
+        channel.basic_publish(exchange='logs', routing_key='armazenamento', body=json.dumps(dic))
+
+        #vou enviar a mensagem para o exchange, vou utilizar de um exchange fanout
+        #o fanout simplesmente broadcast todas as mensagens para todas as queues que ele conhece
+
+
         ch.basic_ack(delivery_tag = method.delivery_tag) #o ack manual, nao perco a mensagem mesmo se eu der um CONTROL C enquanto ela estiver sendo enviada, quando o worker terminar a mensagem sera reenviada
     #o ack deve ser enviado no mesmo canal que se recebe a mensagem
-#um erro facil porem terrivel é esquecer o basic_ack
-#para debugar essse tipo de erro se usa:sudo rabbitmqctl list_queues name messages_ready messages_unacknowledged, ele printa o ack
+    #um erro facil porem terrivel é esquecer o basic_ack
+    #para debugar essse tipo de erro se usa:sudo rabbitmqctl list_queues name messages_ready messages_unacknowledged, ele printa o ack
 
-#E se o server RABBITMQ parar? A mensagem ainda pode ser perdida, para nao perder devo omarcar as listas e as mensagens como durable
+
+    #E se o server RABBITMQ parar? A mensagem ainda pode ser perdida, para nao perder devo omarcar as listas e as mensagens como durable
     channel.basic_qos(prefetch_count=1)#nao despache uma nova mensagem a um produtor que ainda estiver processando e ack the previous one
-#Vai ser despachado para oq nao tiver ocupado
-#depois, preciso falar que RABBITMQ que essa funcao de callbacj particular deve receber mensagens a minha queue
+    #Vai ser despachado para oq nao tiver ocupado
+    #depois, preciso falar que RABBITMQ que essa funcao de callbacj particular deve receber mensagens a minha queue
     channel.basic_consume(queue='produtores', on_message_callback=callback) #no meu caso o ack deve ser manual e nao automatico
     channel.start_consuming()
 
