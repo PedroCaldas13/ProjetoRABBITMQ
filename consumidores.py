@@ -25,7 +25,7 @@ def main():
 #fake a second worker for every dot in the message body, it will pop the messages from the queue and perform the task
 
 # criando exchange,deve ser fora
-    channel.exchange_declare(exchange='logs', exchange_type='fanout')
+    channel.exchange_declare(exchange='imagens_convertidas',durable=True,exchange_type='fanout')
 
     def callback(ch, method, properties, body):
         #tenho que pegar o json
@@ -47,15 +47,17 @@ def main():
         buffer = io.BytesIO()
         im_cinza.save(buffer, format="PNG") #salvo no buffer
         dados = buffer.getvalue() #pego os dados
-        dados_finais = base64.b64encode(dados)
+        dados_finais = base64.b64encode(dados).decode('utf-8')  #transformo em str
         dic = {"filename": imagens_nomes,"content": dados_finais}
         #agora faco o publish no exchange
-        channel.basic_publish(exchange='logs', routing_key='armazenamento', body=json.dumps(dic))
+        ch.basic_publish(exchange='imagens_convertidas', routing_key='', body=json.dumps(dic),
+                              properties=pika.BasicProperties(delivery_mode=pika.DeliveryMode.Persistent))
+        #nao precisa de routing_key aqui pois o fanout ja manda para todas
 
         #vou enviar a mensagem para o exchange, vou utilizar de um exchange fanout
         #o fanout simplesmente broadcast todas as mensagens para todas as queues que ele conhece
 
-
+        print("[x] Done")
         ch.basic_ack(delivery_tag = method.delivery_tag) #o ack manual, nao perco a mensagem mesmo se eu der um CONTROL C enquanto ela estiver sendo enviada, quando o worker terminar a mensagem sera reenviada
     #o ack deve ser enviado no mesmo canal que se recebe a mensagem
     #um erro facil porem terrivel é esquecer o basic_ack
