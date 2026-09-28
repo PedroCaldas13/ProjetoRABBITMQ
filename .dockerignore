@@ -1,0 +1,7 @@
+**/.git
+**/.idea
+**/__pycache__
+**/*.pyc
+**/.DS_Store
+**/imagens_servidores
+**/imagensClientes

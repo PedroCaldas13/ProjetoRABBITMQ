@@ -1,0 +1,6 @@
+# Python package dependencies for the application, pinned for reproducible builds.
+# See https://pip.pypa.io/en/stable/reference/requirements-file-format/
+
+pika==1.4.4
+pillow==12.3.0
+#os demais fazem parte da biblioteca padrao do python

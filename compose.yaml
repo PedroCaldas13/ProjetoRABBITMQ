@@ -1,0 +1,65 @@
+services:
+  rabbitmq:
+    image: rabbitmq:4-managment
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  armazenamento1:
+    build: .
+    command: ["python","armazenamento.py","1"]
+    environment:
+      RABBITMQ_HOST: rabbitmq
+    volumes:
+      - ./imagens_servidores/servidor1:/app/imagens_servidores/servidor1
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  armazenamento2:
+    build: .
+    command: ["python","armazenamento.py","2"]
+    environment:
+      RABBITMQ_HOST : rabbitmq
+    volumes:
+      - ./imagens_servidores/servidor2:/app/imagens_servidores/servidor2
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  consumidores:
+    build: .
+    command: ["python","consumidores.py"]
+    environment:
+      RABBITMQ_HOST : rabbitmq
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      armazenamento1:
+        condition: service_started
+
+
+  clientes:
+    build: .
+    command: ["python","clientes.py"]
+    environment:
+      RABBITMQ_HOST: rabbitmq
+    volumes:
+      - ./imagensClientes/cliente1:/app/imagensClientes/cliente1
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      armazenamento1:
+        condition: service_started
+      armazenamento2:
+        condition: service_started
+
+
+
+
+

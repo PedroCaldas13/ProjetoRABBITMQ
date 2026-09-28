@@ -4,8 +4,6 @@
 import base64
 import json
 import pika
-import sys
-import os
 from pathlib import Path
 
 

@@ -1,12 +1,11 @@
 #as filas aqui devem ser fixas e nao temporarias
 import base64
-import io
 import os
 from pathlib import Path
 import sys
 import pika
 import json
-import re
+
 
 def main():
 
