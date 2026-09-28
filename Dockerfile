@@ -8,7 +8,7 @@
 # For more information, see https://docs.docker.com/dhi/
 
 # Nao utilizei dhi para o professor visualizar sem ter login.
-FROM python:3.13-slim
+FROM python:3.13-slim AS builder
 
 WORKDIR /app
 

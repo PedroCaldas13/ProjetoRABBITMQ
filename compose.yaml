@@ -1,6 +1,6 @@
 services:
   rabbitmq:
-    image: rabbitmq:4-managment
+    image: rabbitmq:4-management
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -41,6 +41,8 @@ services:
       rabbitmq:
         condition: service_healthy
       armazenamento1:
+        condition: service_started
+      armazenamento2:
         condition: service_started
 
 
