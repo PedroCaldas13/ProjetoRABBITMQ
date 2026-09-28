@@ -12,7 +12,7 @@ from PIL import Image
 def main():
 
 #devo conectar com o RABBITMQ assim como no clientes do sent
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host=os.environ.get("RABBITMQ_HOST", "localhost")))
     channel = connection.channel()
 
 #que nem antes, ter certeza que a fila existe

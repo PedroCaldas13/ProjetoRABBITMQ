@@ -16,7 +16,7 @@ def main():
         sys.exit(1)
     pasta = "imagens_servidores/servidor" + numero
 
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host=os.environ.get("RABBITMQ_HOST", "localhost")))
     channel = connection.channel()
 
     channel.exchange_declare(exchange='imagens_convertidas',durable=True,exchange_type='fanout')

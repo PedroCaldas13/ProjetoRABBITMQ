@@ -5,12 +5,12 @@ import base64
 import json
 import pika
 from pathlib import Path
-
+import os
 
 
 #sending
 #comeco uma comunicacao com o RABBITMQ server
-connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+connection = pika.BlockingConnection(pika.ConnectionParameters(host = os.environ.get("RABBITMQ_HOST", "localhost")))
 channel = connection.channel()
 #se quero conectar a um brocker de outra maquina devo colocar o IP dela
 
