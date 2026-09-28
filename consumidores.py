@@ -41,7 +41,7 @@ def main():
         im_cinza = im.convert('L') #nao ta mais em bytes
 
         print(f" [x] Received {imagens_nomes}") #saber oq a funcao decode faz
-        print("[x] Done")
+
 
         #preciso converter de volta para bytes para enviar com o publish(etapa 3)
         buffer = io.BytesIO()
