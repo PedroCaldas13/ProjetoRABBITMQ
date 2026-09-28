@@ -9,12 +9,19 @@ import json
 import re
 
 def main():
+
+    #abrir o arquivo
+    numero = sys.argv[1]
+    if len(sys.argv) < 2:
+        print("Deve conter um numero de identificacao apos o armazenamento.py")
+        sys.exit(1)
+    pasta = "imagens_servidores/servidor" + numero
+
     connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
     channel = connection.channel()
 
     channel.exchange_declare(exchange='imagens_convertidas',durable=True,exchange_type='fanout')
-    numero = sys.argv[1]
-    pasta = "imagens_servidores/servidor" + numero;
+
     Path(pasta).mkdir(parents=True, exist_ok=True)
 
     result = channel.queue_declare(queue='armazenamento' + numero, durable=True, arguments={'x-queue-type': 'quorum'})
@@ -22,7 +29,7 @@ def main():
 
     channel.queue_bind(exchange='imagens_convertidas', queue=queue_name)
 
-    print(' [*] Waiting for Imagens. To exit press CTRL+C')
+    print(' [*] Waiting for Images. To exit press CTRL+C')
 
 
 
@@ -30,7 +37,7 @@ def main():
         conteudo = json.loads(body) #pego o filename e o conteudo
         imagem_bytes = base64.b64decode(conteudo['content'])
 
-        Path(pasta)/conteudo["filename"].write_bytes(imagem_bytes)
+        (Path(pasta)/conteudo["filename"]).write_bytes(imagem_bytes)
 
         print(' [*] Received '+conteudo['filename'])
         ch.basic_ack(delivery_tag=method.delivery_tag)
