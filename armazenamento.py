@@ -2,31 +2,37 @@
 import base64
 import io
 import os
-import pathlib
+from pathlib import Path
 import sys
 import pika
 import json
+import re
 
 def main():
     connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
     channel = connection.channel()
 
     channel.exchange_declare(exchange='imagens_convertidas',durable=True,exchange_type='fanout')
+    numero = sys.argv[1]
+    pasta = "imagens_servidores/servidor" + numero;
+    Path(pasta).mkdir(parents=True, exist_ok=True)
 
-    result = channel.queue_declare(queue='armazenamento1', durable=True, arguments={'x-queue-type': 'quorum'})
+    result = channel.queue_declare(queue='armazenamento' + numero, durable=True, arguments={'x-queue-type': 'quorum'})
     queue_name = result.method.queue
 
-    channel.queue_bind(exchange='armazenamento1', queue=queue_name)
+    channel.queue_bind(exchange='imagens_convertidas', queue=queue_name)
 
     print(' [*] Waiting for Imagens. To exit press CTRL+C')
 
+
+
     def callback(ch,method, properties, body):
         conteudo = json.loads(body) #pego o filename e o conteudo
-        bytes = base64.b64decode(conteudo)
-        Path(pasta).mkdir(parents=True, exist_ok=True)
-        Path(pasta).write_bytes(bytes)
+        imagem_bytes = base64.b64decode(conteudo['content'])
 
-        print(' [*] Received '+json.loads(body)['filename'])
+        Path(pasta)/conteudo["filename"].write_bytes(imagem_bytes)
+
+        print(' [*] Received '+conteudo['filename'])
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     channel.basic_qos(prefetch_count=1)
